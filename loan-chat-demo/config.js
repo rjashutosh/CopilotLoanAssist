@@ -16,7 +16,7 @@ var LOAN_CHAT_CONFIG = {
    */
   MSAL: {
     clientId: '80b8b3f5-45dd-4648-9d00-1d4a570221c1',
-    authority: 'https://login.microsoftonline.com/common',
+    authority: 'https://login.microsoftonline.com/5d41fd7c-b291-4130-ac2b-9170e1c4c03e',
     redirectUri: 'http://localhost:8080/loan-chat-demo/index.html',
     scope: 'https://api.powerplatform.com/.default'
   }
