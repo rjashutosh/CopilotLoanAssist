@@ -219,8 +219,16 @@
         return res.json();
       }).then(function (data) {
         var id = data.conversationId || data.id || data.ConversationId;
-        if (id) return id;
-        throw new Error('No conversationId in response');
+        if (!id) throw new Error('No conversationId in response');
+        id = String(id).trim();
+        if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id)) return id;
+        var m = id.match(/\/conversations\/([^/?#]+)\/?/);
+        if (m && m[1]) return m[1];
+        m = id.match(/\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/?$/);
+        if (m && m[1]) return m[1];
+        var last = id.split('/').filter(Boolean).pop();
+        if (last && /^[0-9a-fA-F-]{36}$/.test(last)) return last;
+        return id;
       });
     }
 
