@@ -190,7 +190,13 @@
 
     function createConversation() {
       return apiRequest('POST', '/conversations', null).then(function (res) {
-        if (!res.ok) throw new Error('Create conversation failed: ' + res.status + ' ' + res.statusText);
+        if (!res.ok) {
+          return res.text().then(function (body) {
+            var msg = 'Create conversation failed: ' + res.status + ' ' + res.statusText;
+            if (body) try { var j = JSON.parse(body); if (j.error || j.message) msg += ' — ' + (j.error || j.message); } catch (e) { msg += ' — ' + body.slice(0, 200); }
+            throw new Error(msg);
+          });
+        }
         return res.json();
       }).then(function (data) {
         var id = data.conversationId || data.id || data.ConversationId;
