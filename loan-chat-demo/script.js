@@ -16,15 +16,21 @@
     loginBtn.addEventListener('click', function () {
       if (loginError) loginError.textContent = '';
       loginBtn.disabled = true;
-      if (typeof window.LoanChatAuth !== 'undefined' && window.LoanChatAuth.signInRedirect) {
-        window.LoanChatAuth.signInRedirect().catch(function (err) {
-          if (loginError) loginError.textContent = err.message || 'Sign-in failed. Check config.js.';
-          loginBtn.disabled = false;
-        });
-      } else {
-        if (loginError) loginError.textContent = 'Auth not loaded. Ensure config.js and auth.js are present.';
+      var popupPath = (window.location.pathname || '').replace(/login\.html$/i, 'auth-popup.html') || 'auth-popup.html';
+      var popupUrl = window.location.origin + popupPath;
+      var w = window.open(popupUrl, 'msalSignIn', 'width=500,height=600,scrollbars=yes');
+      if (!w) {
+        if (loginError) loginError.textContent = 'Popup blocked. Allow popups for this site and try again, or use the redirect flow.';
         loginBtn.disabled = false;
+        return;
       }
+      var checkClosed = setInterval(function () {
+        if (w.closed) {
+          clearInterval(checkClosed);
+          loginBtn.disabled = false;
+          window.location.href = (window.location.pathname || '').replace(/login\.html$/i, 'index.html') || 'index.html';
+        }
+      }, 500);
     });
   }
 
@@ -62,19 +68,45 @@
       return;
     }
 
-    window.LoanChatAuth.handleRedirect().then(function (result) {
-      if (!result || !result.account) {
-        if (typeof console !== 'undefined' && console.warn) {
-          console.warn('Loan Support: No account. URL hash length:', (window.location.hash || '').length);
+    function hasOAuthHash() {
+      var h = window.location.hash || '';
+      return h.indexOf('state=') !== -1 || h.indexOf('code=') !== -1 || h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1;
+    }
+
+    function tryShowChat(attempt) {
+      attempt = attempt || 0;
+      var maxAttempts = 4;
+      if (chatLoading) chatLoading.textContent = attempt > 0 ? 'Completing sign-in…' : 'Checking sign-in…';
+      return window.LoanChatAuth.handleRedirect().then(function (result) {
+        if (result && result.account) {
+          try {
+            showChatUI(result.account, result.instance);
+          } catch (e) {
+            if (typeof console !== 'undefined' && console.error) console.error('Loan Support: showChatUI failed', e);
+            if (chatLoading) chatLoading.textContent = 'Could not load chat. Please try again.';
+            var errEl = document.getElementById('chat-error');
+            if (errEl) { errEl.textContent = (e && e.message) || 'Error loading chat'; errEl.hidden = false; }
+          }
+          return;
+        }
+        if (hasOAuthHash() && attempt < maxAttempts - 1) {
+          return new Promise(function (resolve) {
+            setTimeout(function () { tryShowChat(attempt + 1).then(resolve).catch(resolve); }, 600);
+          });
         }
         redirectToLogin();
-        return;
-      }
-      showChatUI(result.account, result.instance);
-    }).catch(function (err) {
-      if (typeof console !== 'undefined' && console.warn) console.warn('Loan Support: handleRedirect failed', err);
-      redirectToLogin();
-    });
+      }).catch(function (err) {
+        if (typeof console !== 'undefined' && console.warn) console.warn('Loan Support: handleRedirect failed', err);
+        if (hasOAuthHash() && attempt < maxAttempts - 1) {
+          return new Promise(function (resolve) {
+            setTimeout(function () { tryShowChat(attempt + 1).then(resolve).catch(function () { redirectToLogin(); }); }, 600);
+          });
+        }
+        redirectToLogin();
+      });
+    }
+
+    tryShowChat(0);
   }
 
   /**

@@ -30,7 +30,7 @@
         authority: authority,
         redirectUri: redirectUri || config.redirectUri || config.redirectUrl || (window.location.origin + window.location.pathname)
       },
-      cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
+      cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
     };
     var instance = new window.msal.PublicClientApplication(opts);
     return instance;
@@ -68,21 +68,26 @@
           return null;
         });
       }
+      function retryWithDelay(delay) {
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            tryHandleRedirect().then(resolve).catch(function () { resolve(null); });
+          }, delay);
+        });
+      }
       return tryHandleRedirect().catch(function () {
         var hash = window.location.hash || '';
         if (hash.indexOf('state=') !== -1 || hash.indexOf('code=') !== -1 || hash.indexOf('access_token=') !== -1) {
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              tryHandleRedirect().then(resolve).catch(function () { resolve(null); });
-            }, 800);
-          });
+          return retryWithDelay(500).then(function (r) { return r != null ? r : retryWithDelay(1200); });
         }
         return null;
       });
     },
 
     /**
-     * Redirect to Microsoft sign-in. Call from login.html; redirectUri should be index.html.
+     * Redirect to Microsoft sign-in. Call from login.html.
+     * Uses current page origin so you land back where you started (localhost or Vercel).
+     * Add both localhost and Vercel redirect URIs in Azure.
      */
     signInRedirect: function () {
       var config = getMsalConfig();
@@ -90,7 +95,7 @@
         return Promise.reject(new Error('Configure MSAL in config.js (clientId and redirectUri).'));
       }
       var indexPath = (window.location.pathname || '').replace(/login\.html$/i, 'index.html') || '/index.html';
-      var redirectUri = config.redirectUri || config.redirectUrl || (window.location.origin + indexPath);
+      var redirectUri = (window.location.origin + indexPath) || config.redirectUri || config.redirectUrl;
       var instance = createMsalInstance(redirectUri);
       if (!instance) return Promise.reject(new Error('MSAL not configured.'));
       var scope = config.scope || 'https://api.powerplatform.com/.default';

@@ -6,7 +6,7 @@ A simple web application that requires users to sign in with Microsoft (Azure AD
 
 - **Microsoft sign-in** using Microsoft Identity Platform (Azure AD) via MSAL.js
 - **Protected chat page**: only authenticated users can access the chatbot
-- **Session handling**: sign-in state in session storage; redirect to login when not authenticated
+- **Session handling**: sign-in state in localStorage (shared with popup); redirect to login when not authenticated
 - **Token for Copilot**: the same Microsoft token is sent to the Copilot Studio agent (Conversations API) so the agent runs in authenticated mode
 - **Mobile-friendly** layout and touch-friendly controls
 
@@ -15,10 +15,12 @@ A simple web application that requires users to sign in with Microsoft (Azure AD
 ```
 loan-chat-demo/
 ├── index.html      # Chat page (protected; redirects to login if not signed in)
-├── login.html      # Sign-in page (Microsoft only)
+├── login.html      # Sign-in page (opens popup)
+├── auth-popup.html # Popup: does Microsoft sign-in, then redirects opener to index
+├── auth-popup.js   # Popup logic (MSAL in popup)
 ├── config.js       # Copilot API base URL + MSAL settings (edit before run)
-├── auth.js         # MSAL redirect flow, handleRedirect, signOut
-├── script.js       # Login button, chat protection, programmatic chat (Conversations API)
+├── auth.js         # MSAL handleRedirect, signOut (cache in localStorage)
+├── script.js       # Login button (popup), chat protection, programmatic chat
 ├── styles.css      # Shared styles
 └── README.md       # This file
 ```
@@ -35,11 +37,12 @@ You need a **Single-page application (SPA)** registration so the web app can sig
 
 3. **Supported account types**: choose **Accounts in any organizational directory and personal Microsoft accounts** (or **Single tenant** if you only want your org).
 
-4. **Redirect URI**:
+4. **Redirect URIs** (add all that you use):
    - Platform: **Single-page application (SPA)**.
-   - URI: the full URL of your **chat page** (where the user lands after login). Examples:
-     - Local: `http://localhost:8080/loan-chat-demo/index.html`
-     - Deployed: `https://yourdomain.com/loan-chat-demo/index.html`
+   - Add **both**:
+     - Chat page: `http://localhost:8080/loan-chat-demo/index.html` (local) and/or `https://yourdomain.com/loan-chat-demo/index.html` (production).
+     - **Popup sign-in** (recommended): `http://localhost:8080/loan-chat-demo/auth-popup.html` and/or `https://yourdomain.com/loan-chat-demo/auth-popup.html`.  
+   The app uses a **popup** for sign-in by default so you land back on the same site (localhost or Vercel).
 
 5. Click **Register**.
 
