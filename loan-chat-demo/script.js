@@ -189,11 +189,20 @@
     }
 
     function createConversation() {
-      return apiRequest('POST', '/conversations', null).then(function (res) {
+      return apiRequest('POST', '/conversations', {}).then(function (res) {
         if (!res.ok) {
           return res.text().then(function (body) {
             var msg = 'Create conversation failed: ' + res.status + ' ' + res.statusText;
-            if (body) try { var j = JSON.parse(body); if (j.error || j.message) msg += ' — ' + (j.error || j.message); } catch (e) { msg += ' — ' + body.slice(0, 200); }
+            if (body) {
+              try {
+                var j = JSON.parse(body);
+                if (j.message) msg += ' — ' + j.message;
+                if (j.error) msg += ' — ' + j.error;
+                if (j.innererror && j.innererror.message) msg += ' (' + j.innererror.message + ')';
+              } catch (e) {
+                msg += ' — ' + body.slice(0, 300);
+              }
+            }
             throw new Error(msg);
           });
         }
