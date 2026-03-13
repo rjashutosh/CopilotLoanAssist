@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Support Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="chat-page">
+  <header class="chat-header">
+    <h1>Loan Support Assistant</h1>
+    <div class="chat-header-right">
+      <span class="user-badge" id="user-badge" aria-live="polite">Signed in as <strong id="user-name">—</strong></span>
+      <button type="button" class="btn btn-logout" id="btn-logout" aria-label="Sign out">Sign out</button>
+    </div>
+  </header>
+
+  <main class="chat-main" id="chat-main">
+    <div id="chat-loading" class="chat-loading" role="status" aria-live="polite">Checking sign-in…</div>
+
+    <div id="chat-content" class="chat-content" hidden>
+      <h2 class="chat-title">Chat with your loan assistant</h2>
+
+      <div class="chat-embed-wrapper chat-programmatic">
+        <div id="chat-area" class="chat-area">
+          <div id="chat-messages" class="chat-messages" role="log" aria-live="polite"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." autocomplete="off" maxlength="4000">
+            <button type="button" class="btn btn-send" id="btn-send" aria-label="Send">Send</button>
+          </div>
+        </div>
+        <div id="chat-error" class="chat-error" role="alert" hidden></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.32.2/js/msal-browser.min.js"></script>
+  <script src="auth.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
