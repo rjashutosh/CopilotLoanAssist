@@ -54,18 +54,29 @@
       var uri = redirectUri || config.redirectUri || (window.location.origin + window.location.pathname);
       var instance = createMsalInstance(uri);
       if (!instance) return Promise.resolve(null);
-      return instance.initialize().then(function () {
-        return instance.handleRedirectPromise();
-      }).then(function (result) {
-        if (result && result.account) {
-          return { account: result.account, instance: instance };
+      function tryHandleRedirect() {
+        return instance.initialize().then(function () {
+          return instance.handleRedirectPromise();
+        }).then(function (result) {
+          if (result && result.account) {
+            return { account: result.account, instance: instance };
+          }
+          var accounts = instance.getAllAccounts();
+          if (accounts.length > 0) {
+            return { account: accounts[0], instance: instance };
+          }
+          return null;
+        });
+      }
+      return tryHandleRedirect().catch(function () {
+        var hash = window.location.hash || '';
+        if (hash.indexOf('state=') !== -1 || hash.indexOf('code=') !== -1 || hash.indexOf('access_token=') !== -1) {
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              tryHandleRedirect().then(resolve).catch(function () { resolve(null); });
+            }, 800);
+          });
         }
-        var accounts = instance.getAllAccounts();
-        if (accounts.length > 0) {
-          return { account: accounts[0], instance: instance };
-        }
-        return null;
-      }).catch(function () {
         return null;
       });
     },
@@ -78,7 +89,8 @@
       if (!config || !config.clientId || config.clientId === 'YOUR_CLIENT_ID') {
         return Promise.reject(new Error('Configure MSAL in config.js (clientId and redirectUri).'));
       }
-      var redirectUri = config.redirectUri || (window.location.origin + '/index.html');
+      var indexPath = (window.location.pathname || '').replace(/login\.html$/i, 'index.html') || '/index.html';
+      var redirectUri = config.redirectUri || (window.location.origin + indexPath);
       var instance = createMsalInstance(redirectUri);
       if (!instance) return Promise.reject(new Error('MSAL not configured.'));
       var scope = config.scope || 'https://api.powerplatform.com/.default';

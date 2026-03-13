@@ -64,11 +64,15 @@
 
     window.LoanChatAuth.handleRedirect().then(function (result) {
       if (!result || !result.account) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('Loan Support: No account. URL hash length:', (window.location.hash || '').length);
+        }
         redirectToLogin();
         return;
       }
       showChatUI(result.account, result.instance);
-    }).catch(function () {
+    }).catch(function (err) {
+      if (typeof console !== 'undefined' && console.warn) console.warn('Loan Support: handleRedirect failed', err);
       redirectToLogin();
     });
   }
