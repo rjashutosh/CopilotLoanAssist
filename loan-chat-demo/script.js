@@ -185,7 +185,7 @@
     function apiRequest(method, path, body) {
       return getAccessToken().then(function (tokenResponse) {
         var url = baseUrl + path;
-        if (path.indexOf('?') === -1) url += query;
+        if (path.indexOf('?') === -1 && path.indexOf('api-version') === -1) url += query;
         var opts = {
           method: method,
           headers: {

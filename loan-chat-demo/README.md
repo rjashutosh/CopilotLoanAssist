@@ -51,10 +51,12 @@ You need a **Single-page application (SPA)** registration so the web app can sig
 7. **Optional (if your Copilot/API requires it):**  
    **Certificates & secrets** → **Client secrets** is **not** used for the SPA (MSAL uses the implicit/public flow). Leave it empty for the front-end.
 
-8. **API permissions** (if your admin requires explicit consent):
-   - **Add a permission** → **APIs my organization uses** → search for **Power Platform** or **Dataverse**.
-   - Add scope: `https://api.powerplatform.com/.default` (or the scope your Copilot connection string expects).
-   - Grant admin consent if required by your tenant.
+8. **API permissions** (required for Conversations API):
+   - **Add a permission** → **APIs my organization uses** → search for **Power Platform** (or App ID `8578e004-a5c6-46e7-913e-12f58912df43`).
+   - Add **Delegated** permissions. Some agents need:
+     - **CopilotStudio.Copilots.Invoke** — expand **CopilotStudio**, check this.
+     - **All.All.ReadWrite** — if the API returns "InsufficientDelegatedPermissions" asking for this: expand **All** in the same Power Platform API permission list (scroll down), then check **All.ReadWrite**. If you don't see an "All" section, the permission may not be available in your tenant; ask your Power Platform admin or use an agent that only requires CopilotStudio.Copilots.Invoke.
+   - Click **Add permissions**, then **Grant admin consent for &lt;your org&gt;** (if your tenant uses it).
 
 ## 2. Configuring the Web App (`config.js`)
 
