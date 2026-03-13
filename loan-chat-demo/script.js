@@ -168,14 +168,24 @@
         scopes: [msalConfig.scope || 'https://api.powerplatform.com/.default'],
         redirectUri: redirectUri
       };
-      return msalInstance.acquireTokenSilent(request).catch(function () {
-        return msalInstance.acquireTokenPopup(request);
+      return msalInstance.acquireTokenSilent(request).catch(function (err) {
+        if (err && err.message && err.message.indexOf('interaction_in_progress') !== -1) {
+          return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+              msalInstance.acquireTokenSilent(request).then(resolve).catch(reject);
+            }, 1500);
+          });
+        }
+        return msalInstance.acquireTokenSilent(request).catch(function () {
+          return msalInstance.acquireTokenPopup(request);
+        });
       });
     }
 
     function apiRequest(method, path, body) {
       return getAccessToken().then(function (tokenResponse) {
-        var url = baseUrl + path + query;
+        var url = baseUrl + path;
+        if (path.indexOf('?') === -1) url += query;
         var opts = {
           method: method,
           headers: {
