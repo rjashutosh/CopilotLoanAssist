@@ -28,7 +28,7 @@
       auth: {
         clientId: config.clientId,
         authority: authority,
-        redirectUri: redirectUri || config.redirectUri || (window.location.origin + window.location.pathname)
+        redirectUri: redirectUri || config.redirectUri || config.redirectUrl || (window.location.origin + window.location.pathname)
       },
       cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
     };
@@ -51,7 +51,7 @@
     handleRedirect: function (redirectUri) {
       var config = getMsalConfig();
       if (!config) return Promise.resolve(null);
-      var uri = redirectUri || config.redirectUri || (window.location.origin + window.location.pathname);
+      var uri = redirectUri || (window.location.origin + window.location.pathname) || config.redirectUri;
       var instance = createMsalInstance(uri);
       if (!instance) return Promise.resolve(null);
       function tryHandleRedirect() {
@@ -90,7 +90,7 @@
         return Promise.reject(new Error('Configure MSAL in config.js (clientId and redirectUri).'));
       }
       var indexPath = (window.location.pathname || '').replace(/login\.html$/i, 'index.html') || '/index.html';
-      var redirectUri = config.redirectUri || (window.location.origin + indexPath);
+      var redirectUri = config.redirectUri || config.redirectUrl || (window.location.origin + indexPath);
       var instance = createMsalInstance(redirectUri);
       if (!instance) return Promise.reject(new Error('MSAL not configured.'));
       var scope = config.scope || 'https://api.powerplatform.com/.default';
